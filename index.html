@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#1b1613">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Piano Pasti">
 <title>Piano Pasti</title>
@@ -357,7 +358,10 @@ const DEFAULT_BASE = {
 };
 
 function cloneWeek(w){ return JSON.parse(JSON.stringify(w)); }
-function weeksEqual(a,b){ return JSON.stringify(a) === JSON.stringify(b); }
+function weeksEqual(a,b){
+  if(!a || !b) return a === b;
+  return MEALS.every(m => (a[m.key]||'') === (b[m.key]||''));
+}
 
 /* ═══════════════════════════════════════════
    STATE
@@ -423,6 +427,7 @@ document.getElementById('syncBtn').addEventListener('click', () => {
 });
 
 function initFirebase(){
+  if(db) return; // evita doppia inizializzazione
   if(typeof firebase === 'undefined'){
     setSyncStatus('error');
     showSyncNote('SDK Firebase non caricato: verifica la connessione e ricarica la pagina');
