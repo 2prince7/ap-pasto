@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="theme-color" content="#1b1613">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Piano Pasti">
+<title>Piano Pasti</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f2924b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8h1a4 4 0 0 1 0 8h-1'/%3E%3Cpath d='M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z'/%3E%3Cline x1='6' y1='1' x2='6' y2='4'/%3E%3Cline x1='10' y1='1' x2='10' y2='4'/%3E%3Cline x1='14' y1='1' x2='14' y2='4'/%3E%3C/svg%3E">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.2/firebase-firestore-compat.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1b1613;
+  --surface:#241e1a;
+  --surface-2:#2c2521;
+  --line:#3a322c;
+  --text:#f2ece4;
+  --text-dim:#a99e93;
+  --accent:#f2924b;
+  --accent-dim:#7a4d2c;
+  --sage:#8fae7b;
+  --danger:#e0685a;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+  overscroll-behavior-y:none;
+}
+h1,h2,h3{font-family:'Fraunces',serif}
+button,input,textarea,select{font-family:inherit}
+.app{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* HEADER */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 4px 14px;
+}
+header h1{font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:.2px}
+.sync-btn{
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:var(--surface);color:var(--text-dim);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;flex-shrink:0;position:relative;
+}
+.sync-btn svg{width:18px;height:18px;stroke:currentColor;fill:none}
+.sync-btn.connected{color:var(--sage);border-color:var(--sage)}
+.sync-btn.syncing svg{animation:spin 1s linear infinite}
+.sync-btn.error{color:var(--danger);border-color:var(--danger)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.sync-note{
+  position:absolute;top:48px;right:0;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text-dim);white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:50;display:none;
+}
+.sync-note.visible{display:block}
+
+/* TABS content wrapper */
+.view{display:none;animation:fadeIn .18s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* HOME */
+.today-head{margin-bottom:18px}
+.today-head .eyebrow{font-size:13px;color:var(--accent);font-weight:600}
+.today-head h2{font-size:1.9rem;font-weight:600;margin-top:2px}
+.diff-badge{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 10px;border-radius:20px;
+  background:rgba(242,146,75,.12);border:1px solid var(--accent-dim);color:var(--accent);font-size:12px;font-weight:500;
+}
+.meal-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.meal-row{
+  display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:14px 16px;
+}
+.meal-icon{
+  width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--accent);
+}
+.meal-icon svg{width:18px;height:18px;stroke:currentColor;fill:none}
+.meal-body{flex:1;min-width:0}
+.meal-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);font-weight:600}
+.meal-text{font-size:15px;line-height:1.45;margin-top:3px;color:var(--text)}
+.meal-text.empty{color:var(--text-dim);font-style:italic}
+
+/* WEEK VIEWS */
+.week-intro{font-size:13px;color:var(--text-dim);line-height:1.5;margin-bottom:16px}
+.tool-bar{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.tool-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+}
+.tool-card summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between}
+.tool-card summary::-webkit-details-marker{display:none}
+.tool-card summary .chev{transition:transform .2s;color:var(--text-dim)}
+.tool-card[open] summary .chev{transform:rotate(180deg)}
+.tool-body{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.swap-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.swap-row select{
+  flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:9px 10px;font-size:13px;
+}
+.swap-arrow{color:var(--text-dim);flex-shrink:0}
+.btn{
+  border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.btn-accent{background:var(--accent);color:#241108}
+.btn-accent:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--danger);color:var(--danger)}
+.btn-full{width:100%}
+.reset-row{display:flex;justify-content:flex-end;margin-bottom:14px}
+
+.day-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden;
+}
+.day-card-head{
+  padding:13px 16px;font-weight:600;font-size:15px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.day-card-head .date-sub{font-size:11px;color:var(--text-dim);font-weight:400}
+.day-card-body{padding:6px 16px 14px}
+.meal-edit{padding:9px 0;border-bottom:1px solid var(--line)}
+.meal-edit:last-child{border-bottom:none}
+.meal-edit label{
+  display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-dim);font-weight:600;margin-bottom:6px;
+}
+.meal-edit label svg{width:13px;height:13px;stroke:var(--accent);fill:none}
+.meal-edit textarea{
+  width:100%;background:transparent;border:none;color:var(--text);font-size:14px;line-height:1.4;
+  resize:none;font-family:inherit;padding:0;min-height:20px;
+}
+.meal-edit textarea:focus{outline:none}
+.meal-edit textarea::placeholder{color:var(--text-dim);font-style:italic}
+
+/* BOTTOM NAV */
+nav.tabbar{
+  position:fixed;left:0;right:0;bottom:0;
+  background:rgba(27,22,19,.92);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;z-index:100;
+}
+nav.tabbar button{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 0 8px;background:none;border:none;color:var(--text-dim);cursor:pointer;
+}
+nav.tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none}
+nav.tabbar button span{font-size:11px;font-weight:500}
+nav.tabbar button.active{color:var(--accent)}
+
+.toast{
+  position:fixed;bottom:calc(76px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);font-size:13px;
+  padding:10px 18px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+}
+.toast.visible{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+@media(min-width:520px){
+  .app{padding:0 24px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Piano Pasti</h1>
+    <div style="position:relative">
+      <button class="sync-btn" id="syncBtn" title="Stato sincronizzazione">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+      </button>
+      <div class="sync-note" id="syncNote"></div>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <section class="view active" id="view-oggi">
+    <div class="today-head">
+      <div class="eyebrow" id="todayEyebrow">OGGI</div>
+      <h2 id="todayDayName">—</h2>
+      <div class="diff-badge" id="diffBadge" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        Modificato rispetto alla settimana base
+      </div>
+    </div>
+    <div class="meal-list" id="todayMealList"></div>
+  </section>
+
+  <!-- SETTIMANA CORRENTE -->
+  <section class="view" id="view-corrente">
+    <div class="week-intro">Questa è la settimana in corso: qui puoi modificare i pasti solo per questi 7 giorni, o scambiarli tra loro. La settimana base non viene toccata.</div>
+    <div class="reset-row">
+      <button class="btn btn-ghost" id="resetBtn">Ripristina da settimana base</button>
+    </div>
+    <div class="tool-bar">
+      <details class="tool-card">
+        <summary>Scambia un pasto tra due giorni <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="tool-body">
+          <div class="swap-row">
+            <select id="swapMealDayA"></select>
+            <select id="swapMealA"></select>
+          </div>
+          <div class="swap-row" style="justify-content:center">
+            <span class="swap-arrow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+            </span>
+          </div>
+          <div class="swap-row">
+            <select id="swapMealDayB"></select>
+            <select id="swapMealB"></select>
+          </div>
+          <button class="btn btn-accent btn-full" id="doSwapMeal">Scambia pasto</button>
+        </div>
+      </details>
+      <details class="tool-card">
+        <summary>Scambia due giorni interi <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="tool-body">
+          <div class="swap-row">
+            <select id="swapDayA"></select>
+            <span class="swap-arrow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M8 21H3v-5"/><path d="M20 4L3 21"/></svg>
+            </span>
+            <select id="swapDayB"></select>
+          </div>
+          <button class="btn btn-accent btn-full" id="doSwapDay">Scambia giorni</button>
+        </div>
+      </details>
+    </div>
+    <div id="currentWeekList"></div>
+  </section>
+
+  <!-- SETTIMANA BASE -->
+  <section class="view" id="view-base">
+    <div class="week-intro">Questa è la programmazione standard, usata come riferimento. Modificarla qui non cambia la settimana in corso — usa "Ripristina" nella scheda Settimana per riportarla allineata.</div>
+    <div id="baseWeekList"></div>
+  </section>
+</div>
+
+<nav class="tabbar">
+  <button class="active" data-view="oggi">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Oggi</span>
+  </button>
+  <button data-view="corrente">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Settimana</span>
+  </button>
+  <button data-view="base">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>Base</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDtp7UFmPbwmwHeYZW89aL2ZALBcsuUfHU",
+  authDomain: "appasto-a1596.firebaseapp.com",
+  projectId: "appasto-a1596",
+  storageBucket: "appasto-a1596.firebasestorage.app",
+  messagingSenderId: "304695680069",
+  appId: "1:304695680069:web:46b0fec4183ada7660572c"
+};
+const CACHE_KEY = 'pianoPastiCache_v1';
+
+const DAYS = [
+  {key:'lunedi', label:'Lunedì'},
+  {key:'martedi', label:'Martedì'},
+  {key:'mercoledi', label:'Mercoledì'},
+  {key:'giovedi', label:'Giovedì'},
+  {key:'venerdi', label:'Venerdì'},
+  {key:'sabato', label:'Sabato'},
+  {key:'domenica', label:'Domenica'},
+];
+
+const MEALS = [
+  {key:'colazione', label:'Colazione', icon:'coffee'},
+  {key:'spuntino1', label:'Spuntino', icon:'apple'},
+  {key:'pranzo', label:'Pranzo', icon:'sun'},
+  {key:'spuntino2', label:'Spuntino', icon:'apple'},
+  {key:'cena', label:'Cena', icon:'moon'},
+];
+
+const ICONS = {
+  coffee: '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  apple: '<path d="M12 20c-4 0-7-3.5-7-8 0-3 2-5 4.5-5 1 0 1.8.4 2.5 1 .7-.6 1.5-1 2.5-1C17 7 19 9 19 12c0 4.5-3 8-7 8Z"/><path d="M12 7c0-2 1-3.5 3-4"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
+};
+
+const DEFAULT_BASE = {
+  lunedi: {
+    colazione:'Caffè + 1 tazza latte + 5 fette biscottate + marmellata light',
+    spuntino1:'1 banana',
+    pranzo:'150g riso + 2 uova + 1 scatoletta tonno + pomodorini + mais',
+    spuntino2:'Pesca + yogurt proteico',
+    cena:'150g di pasta con il pesto + 200g Petto di pollo + verdure',
+  },
+  martedi: {
+    colazione:'Caffè + yogurt greco alla frutta 150g + 3 cucchiai cereali',
+    spuntino1:'1 banana',
+    pranzo:'150g riso + 150g di macinato magro + verdure a volontà (anche piatto unico con zucchine)',
+    spuntino2:'1 frutto + yogurt proteico',
+    cena:'150g di riso con il pomodoro + 150g Merluzzo o salmone + verdure',
+  },
+  mercoledi: {
+    colazione:'Caffè + 1 tazza latte + 5 fette biscottate + marmellata light',
+    spuntino1:'1 banana',
+    pranzo:'150g di riso ad insalata + 130g di fagioli + 1 scatoletta di tonno',
+    spuntino2:'80g di pane + 80g di affettato magro',
+    cena:'150g Vitello in piastra o hamburger + 150g di pane a bruschetta o fresa + verdure grigliate',
+  },
+  giovedi: {
+    colazione:'Caffè + yogurt greco alla frutta 150g + 3 cucchiai cereali',
+    spuntino1:'1 banana',
+    pranzo:'150g di pasta o riso (esempio riso uova piselli) + 150g pollo o vitello + verdure',
+    spuntino2:'1 frutto + yogurt',
+    cena:'Mozzarella 200g + 80g di prosciutto crudo o speck + pomodoro + 150g di pane o piadina',
+  },
+  venerdi: {
+    colazione:'Caffè + 1 tazza latte + 5 fette biscottate + marmellata light',
+    spuntino1:'1 banana',
+    pranzo:'150g di pasta o riso (esempio pasta e zucchine) + 150g salmone o pesce + verdure',
+    spuntino2:'80g di pane + 80g di affettato magro',
+    cena:'3 uova + verdure cotte e crude + 150g di pane',
+  },
+  sabato: {
+    colazione:'Libero',
+    spuntino1:'',
+    pranzo:'Un secondo e contorno + 120g di pasta o riso integrale o basmati (pasta al pomodoro)',
+    spuntino2:'30g di proteine',
+    cena:'Pizza o libera',
+  },
+  domenica: {
+    colazione:'Caffè + 1 tazza latte + 5 fette biscottate + marmellata light',
+    spuntino1:'',
+    pranzo:'Libero',
+    spuntino2:'',
+    cena:'Secondo e contorno',
+  },
+};
+
+function cloneWeek(w){ return JSON.parse(JSON.stringify(w)); }
+function weeksEqual(a,b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+let state = {
+  base: cloneWeek(DEFAULT_BASE),
+  current: cloneWeek(DEFAULT_BASE),
+};
+let db = null;
+let docRef = null;
+let saveTimer = null;
+let syncing = false;
+let applyingRemote = false;
+
+/* ═══════════════════════════════════════════
+   LOCAL CACHE
+   ═══════════════════════════════════════════ */
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed.base && parsed.current){
+        state = parsed;
+      }
+    }
+  }catch(e){ console.warn('cache non leggibile', e); }
+}
+function saveCache(){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════ */
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('visible'), 2200);
+}
+
+/* ═══════════════════════════════════════════
+   FIREBASE (Firestore) — nessun login richiesto
+   ═══════════════════════════════════════════ */
+function setSyncStatus(status){
+  const btn = document.getElementById('syncBtn');
+  btn.classList.remove('connected','syncing','error');
+  if(status) btn.classList.add(status);
+}
+
+function showSyncNote(msg){
+  const n = document.getElementById('syncNote');
+  n.textContent = msg;
+  n.classList.add('visible');
+  setTimeout(()=>n.classList.remove('visible'), 2600);
+}
+
+document.getElementById('syncBtn').addEventListener('click', () => {
+  showSyncNote(syncing ? 'Sincronizzazione in corso…' : 'Sincronizzato — dati condivisi in tempo reale');
+});
+
+function initFirebase(){
+  if(typeof firebase === 'undefined'){
+    setSyncStatus('error');
+    showSyncNote('SDK Firebase non caricato: verifica la connessione e ricarica la pagina');
+    return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    try{
+      db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false });
+    }catch(e){ /* non critico se già inizializzato */ }
+    try{ db.enablePersistence({ synchronizeTabs: true }); }catch(e){ /* non critico */ }
+    docRef = db.collection('piano-pasti').doc('dati');
+    setSyncStatus('syncing');
+
+    docRef.onSnapshot((snap) => {
+      if(snap.exists){
+        const remote = snap.data();
+        if(remote && remote.base && remote.current){
+          applyingRemote = true;
+          state = { base: remote.base, current: remote.current };
+          saveCache();
+          renderAll();
+          applyingRemote = false;
+        }
+        setSyncStatus('connected');
+      }else{
+        // primo avvio in assoluto: creo il documento con lo stato attuale (cache o default)
+        docRef.set(state).catch(err => {
+          console.error(err);
+          setSyncStatus('error');
+        });
+      }
+    }, (err) => {
+      console.error(err);
+      setSyncStatus('error');
+      showSyncNote('Connessione non disponibile, uso i dati salvati sul dispositivo');
+    });
+  }catch(err){
+    console.error(err);
+    setSyncStatus('error');
+  }
+}
+
+function queueSave(){
+  saveCache();
+  if(applyingRemote) return; // evita di riscrivere un dato appena arrivato dal server
+  clearTimeout(saveTimer);
+  syncing = true;
+  document.getElementById('syncBtn').classList.add('syncing');
+  saveTimer = setTimeout(async () => {
+    if(!docRef) return;
+    try{
+      await docRef.set(state);
+      setSyncStatus('connected');
+    }catch(err){
+      console.error(err);
+      setSyncStatus('error');
+    }
+    syncing = false;
+  }, 700);
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: HOME
+   ═══════════════════════════════════════════ */
+function todayKeyAndLabel(){
+  const now = new Date();
+  const jsDay = now.getDay(); // 0=Dom
+  const idx = (jsDay + 6) % 7; // 0=Lun
+  const dateStr = now.toLocaleDateString('it-IT', { day:'numeric', month:'long' });
+  return { key: DAYS[idx].key, label: DAYS[idx].label, dateStr };
+}
+
+function renderHome(){
+  const { key, label, dateStr } = todayKeyAndLabel();
+  document.getElementById('todayDayName').textContent = label;
+  document.getElementById('todayEyebrow').textContent = dateStr.toUpperCase();
+
+  const diff = !weeksEqual(state.current[key], state.base[key]);
+  document.getElementById('diffBadge').style.display = diff ? 'inline-flex' : 'none';
+
+  const wrap = document.getElementById('todayMealList');
+  wrap.innerHTML = '';
+  MEALS.forEach(m => {
+    const text = (state.current[key] && state.current[key][m.key]) || '';
+    const row = document.createElement('div');
+    row.className = 'meal-row';
+    row.innerHTML = `
+      <div class="meal-icon"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[m.icon]}</svg></div>
+      <div class="meal-body">
+        <div class="meal-label">${m.label}</div>
+        <div class="meal-text ${text?'':'empty'}">${escapeHtml(text) || 'Nessun pasto impostato'}</div>
+      </div>`;
+    wrap.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: WEEK EDIT LISTS (current + base)
+   ═══════════════════════════════════════════ */
+function renderWeekList(containerId, dataKey){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const { key: todayKey } = todayKeyAndLabel();
+  DAYS.forEach(day => {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    const isToday = dataKey === 'current' && day.key === todayKey;
+    card.innerHTML = `
+      <div class="day-card-head">
+        <span>${day.label}</span>
+        ${isToday ? '<span class="date-sub">oggi</span>' : ''}
+      </div>
+      <div class="day-card-body"></div>`;
+    const body = card.querySelector('.day-card-body');
+    MEALS.forEach(m => {
+      const wrap = document.createElement('div');
+      wrap.className = 'meal-edit';
+      const val = (state[dataKey][day.key] && state[dataKey][day.key][m.key]) || '';
+      wrap.innerHTML = `
+        <label><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[m.icon]}</svg>${m.label}</label>
+        <textarea rows="1" placeholder="Nessun pasto…" data-day="${day.key}" data-meal="${m.key}" data-target="${dataKey}">${escapeHtml(val)}</textarea>`;
+      body.appendChild(wrap);
+    });
+    container.appendChild(card);
+  });
+  // autosize + listeners
+  container.querySelectorAll('textarea').forEach(ta => {
+    autosize(ta);
+    ta.addEventListener('input', onMealEdit);
+  });
+}
+
+function autosize(ta){
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function onMealEdit(e){
+  const ta = e.target;
+  autosize(ta);
+  const { day, meal, target } = ta.dataset;
+  if(!state[target][day]) state[target][day] = {};
+  state[target][day][meal] = ta.value;
+  queueSave();
+  if(target === 'current'){
+    renderHome();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SWAP TOOLS
+   ═══════════════════════════════════════════ */
+function fillDaySelects(){
+  const selects = ['swapMealDayA','swapMealDayB','swapDayA','swapDayB'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = DAYS.map(d => `<option value="${d.key}">${d.label}</option>`).join('');
+  });
+  document.getElementById('swapDayB').selectedIndex = 1;
+  document.getElementById('swapMealDayB').selectedIndex = 1;
+  fillMealSelect('swapMealA');
+  fillMealSelect('swapMealB');
+  document.getElementById('swapMealB').selectedIndex = 0;
+}
+function fillMealSelect(id){
+  const sel = document.getElementById(id);
+  sel.innerHTML = MEALS.map((m,i) => `<option value="${m.key}">${m.label}${(m.key==='spuntino1')?' 1':''}${(m.key==='spuntino2')?' 2':''}</option>`).join('');
+}
+
+document.getElementById('doSwapMeal').addEventListener('click', () => {
+  const dA = document.getElementById('swapMealDayA').value;
+  const mA = document.getElementById('swapMealA').value;
+  const dB = document.getElementById('swapMealDayB').value;
+  const mB = document.getElementById('swapMealB').value;
+  if(dA === dB && mA === mB){ toast('Seleziona due pasti diversi'); return; }
+  const tmp = state.current[dA][mA];
+  state.current[dA][mA] = state.current[dB][mB];
+  state.current[dB][mB] = tmp;
+  queueSave();
+  renderWeekList('currentWeekList','current');
+  renderHome();
+  toast('Pasti scambiati');
+});
+
+document.getElementById('doSwapDay').addEventListener('click', () => {
+  const dA = document.getElementById('swapDayA').value;
+  const dB = document.getElementById('swapDayB').value;
+  if(dA === dB){ toast('Seleziona due giorni diversi'); return; }
+  const tmp = state.current[dA];
+  state.current[dA] = state.current[dB];
+  state.current[dB] = tmp;
+  queueSave();
+  renderWeekList('currentWeekList','current');
+  renderHome();
+  toast('Giorni scambiati');
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(!confirm('Ripristinare la settimana in corso dalla settimana base? Le modifiche apportate verranno perse.')) return;
+  state.current = cloneWeek(state.base);
+  queueSave();
+  renderWeekList('currentWeekList','current');
+  renderHome();
+  toast('Settimana ripristinata');
+});
+
+/* ═══════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════ */
+document.querySelectorAll('nav.tabbar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabbar button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  });
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+function renderAll(){
+  renderHome();
+  renderWeekList('currentWeekList','current');
+  renderWeekList('baseWeekList','base');
+}
+
+loadCache();
+fillDaySelects();
+renderAll();
+initFirebase();
+</script>
+</body>
+</html>
