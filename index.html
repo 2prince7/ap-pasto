@@ -74,11 +74,22 @@ header h1{font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:.2px
 
 /* HOME */
 .today-head{margin-bottom:18px}
-.today-head .eyebrow{font-size:13px;color:var(--accent);font-weight:600}
+.today-head .eyebrow{font-size:13px;color:var(--accent);font-weight:600;text-align:center}
 .today-head h2{font-size:1.9rem;font-weight:600;margin-top:2px}
-.diff-badge{
-  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 10px;border-radius:20px;
-  background:rgba(242,146,75,.12);border:1px solid var(--accent-dim);color:var(--accent);font-size:12px;font-weight:500;
+.day-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:2px}
+.day-nav h2{margin-top:0;min-width:170px;text-align:center}
+.day-nav-btn{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+  color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:all .2s;flex-shrink:0;
+}
+.day-nav-btn svg{width:18px;height:18px;stroke:currentColor;fill:none}
+.day-nav-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.day-nav-btn:disabled{opacity:.25;cursor:default}
+.mini-diff{
+  display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.3px;background:rgba(242,146,75,.15);color:var(--accent);
+  vertical-align:middle;
 }
 .meal-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
 .meal-row{
@@ -97,21 +108,6 @@ header h1{font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:.2px
 
 /* WEEK VIEWS */
 .week-intro{font-size:13px;color:var(--text-dim);line-height:1.5;margin-bottom:16px}
-.tool-bar{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
-.tool-card{
-  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
-}
-.tool-card summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between}
-.tool-card summary::-webkit-details-marker{display:none}
-.tool-card summary .chev{transition:transform .2s;color:var(--text-dim)}
-.tool-card[open] summary .chev{transform:rotate(180deg)}
-.tool-body{margin-top:14px;display:flex;flex-direction:column;gap:10px}
-.swap-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.swap-row select{
-  flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
-  border-radius:8px;padding:9px 10px;font-size:13px;
-}
-.swap-arrow{color:var(--text-dim);flex-shrink:0}
 .btn{
   border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;
   transition:all .2s;
@@ -128,20 +124,33 @@ header h1{font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:.2px
 }
 .day-card-head{
   padding:13px 16px;font-weight:600;font-size:15px;background:var(--surface-2);
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;
+  -webkit-tap-highlight-color:transparent;
 }
+.day-card-head::-webkit-details-marker{display:none}
+.day-card-head .chev{transition:transform .2s;color:var(--text-dim);flex-shrink:0}
+.day-card[open] .day-card-head .chev{transform:rotate(180deg)}
 .day-card-head .date-sub{font-size:11px;color:var(--text-dim);font-weight:400}
 .day-card-body{padding:6px 16px 14px}
 .meal-edit{padding:9px 0;border-bottom:1px solid var(--line)}
 .meal-edit:last-child{border-bottom:none}
+.meal-edit.armed{background:rgba(242,146,75,.08);border-radius:10px}
+.meal-edit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
 .meal-edit label{
   display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;
-  color:var(--text-dim);font-weight:600;margin-bottom:6px;
+  color:var(--text-dim);font-weight:600;margin-bottom:0;
 }
 .meal-edit label svg{width:13px;height:13px;stroke:var(--accent);fill:none}
+.meal-swap-btn{
+  width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);
+  color:var(--text-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .2s;
+}
+.meal-swap-btn svg{width:13px;height:13px;stroke:currentColor;fill:none}
+.meal-swap-btn.active{background:var(--accent);border-color:var(--accent);color:#241108}
 .meal-edit textarea{
   width:100%;background:transparent;border:none;color:var(--text);font-size:14px;line-height:1.4;
-  resize:none;font-family:inherit;padding:0;min-height:20px;
+  resize:none;font-family:inherit;padding:0;min-height:20px;overflow:hidden;
 }
 .meal-edit textarea:focus{outline:none}
 .meal-edit textarea::placeholder{color:var(--text-dim);font-style:italic}
@@ -188,13 +197,17 @@ nav.tabbar button.active{color:var(--accent)}
   </header>
 
   <!-- HOME -->
-  <section class="view active" id="view-oggi">
+  <section class="view active" id="view-home">
     <div class="today-head">
       <div class="eyebrow" id="todayEyebrow">OGGI</div>
-      <h2 id="todayDayName">—</h2>
-      <div class="diff-badge" id="diffBadge" style="display:none">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        Modificato rispetto alla settimana base
+      <div class="day-nav">
+        <button class="day-nav-btn" id="prevDayBtn" aria-label="Giorno precedente">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 id="todayDayName">—</h2>
+        <button class="day-nav-btn" id="nextDayBtn" aria-label="Giorno successivo">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
     </div>
     <div class="meal-list" id="todayMealList"></div>
@@ -202,43 +215,9 @@ nav.tabbar button.active{color:var(--accent)}
 
   <!-- SETTIMANA CORRENTE -->
   <section class="view" id="view-corrente">
-    <div class="week-intro">Questa è la settimana in corso: qui puoi modificare i pasti solo per questi 7 giorni, o scambiarli tra loro. La settimana base non viene toccata.</div>
+    <div class="week-intro">Questa è la settimana in corso: qui puoi modificare i pasti solo per questi 7 giorni, o scambiarli tra loro toccando l'icona di scambio su due pasti. La settimana base non viene toccata.</div>
     <div class="reset-row">
       <button class="btn btn-ghost" id="resetBtn">Ripristina da settimana base</button>
-    </div>
-    <div class="tool-bar">
-      <details class="tool-card">
-        <summary>Scambia un pasto tra due giorni <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="tool-body">
-          <div class="swap-row">
-            <select id="swapMealDayA"></select>
-            <select id="swapMealA"></select>
-          </div>
-          <div class="swap-row" style="justify-content:center">
-            <span class="swap-arrow">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-            </span>
-          </div>
-          <div class="swap-row">
-            <select id="swapMealDayB"></select>
-            <select id="swapMealB"></select>
-          </div>
-          <button class="btn btn-accent btn-full" id="doSwapMeal">Scambia pasto</button>
-        </div>
-      </details>
-      <details class="tool-card">
-        <summary>Scambia due giorni interi <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="tool-body">
-          <div class="swap-row">
-            <select id="swapDayA"></select>
-            <span class="swap-arrow">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M8 21H3v-5"/><path d="M20 4L3 21"/></svg>
-            </span>
-            <select id="swapDayB"></select>
-          </div>
-          <button class="btn btn-accent btn-full" id="doSwapDay">Scambia giorni</button>
-        </div>
-      </details>
     </div>
     <div id="currentWeekList"></div>
   </section>
@@ -251,9 +230,9 @@ nav.tabbar button.active{color:var(--accent)}
 </div>
 
 <nav class="tabbar">
-  <button class="active" data-view="oggi">
+  <button class="active" data-view="home">
     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Oggi</span>
+    <span>Home</span>
   </button>
   <button data-view="corrente">
     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -376,6 +355,7 @@ let docRef = null;
 let saveTimer = null;
 let syncing = false;
 let applyingRemote = false;
+let selectedDayIndex = 0;
 
 /* ═══════════════════════════════════════════
    LOCAL CACHE
@@ -438,9 +418,11 @@ function initFirebase(){
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     try{
-      db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false });
+      db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false, merge: true });
     }catch(e){ /* non critico se già inizializzato */ }
-    try{ db.enablePersistence({ synchronizeTabs: true }); }catch(e){ /* non critico */ }
+    db.enablePersistence().catch(err => {
+      console.warn('Persistenza offline non disponibile:', err && err.code);
+    });
     docRef = db.collection('piano-pasti').doc('dati');
     setSyncStatus('syncing');
 
@@ -495,26 +477,30 @@ function queueSave(){
 /* ═══════════════════════════════════════════
    RENDER: HOME
    ═══════════════════════════════════════════ */
-function todayKeyAndLabel(){
+function todayIndex(){
+  const jsDay = new Date().getDay(); // 0=Dom
+  return (jsDay + 6) % 7; // 0=Lun
+}
+function dateForDayIndex(idx){
   const now = new Date();
-  const jsDay = now.getDay(); // 0=Dom
-  const idx = (jsDay + 6) % 7; // 0=Lun
-  const dateStr = now.toLocaleDateString('it-IT', { day:'numeric', month:'long' });
-  return { key: DAYS[idx].key, label: DAYS[idx].label, dateStr };
+  const d = new Date(now);
+  d.setDate(now.getDate() + (idx - todayIndex()));
+  return d.toLocaleDateString('it-IT', { day:'numeric', month:'long' });
 }
 
 function renderHome(){
-  const { key, label, dateStr } = todayKeyAndLabel();
-  document.getElementById('todayDayName').textContent = label;
-  document.getElementById('todayEyebrow').textContent = dateStr.toUpperCase();
-
-  const diff = !weeksEqual(state.current[key], state.base[key]);
-  document.getElementById('diffBadge').style.display = diff ? 'inline-flex' : 'none';
+  const day = DAYS[selectedDayIndex];
+  const isToday = selectedDayIndex === todayIndex();
+  const dateStr = dateForDayIndex(selectedDayIndex);
+  document.getElementById('todayDayName').textContent = day.label;
+  document.getElementById('todayEyebrow').textContent = (isToday ? 'OGGI · ' : '') + dateStr.toUpperCase();
+  document.getElementById('prevDayBtn').disabled = selectedDayIndex === 0;
+  document.getElementById('nextDayBtn').disabled = selectedDayIndex === DAYS.length - 1;
 
   const wrap = document.getElementById('todayMealList');
   wrap.innerHTML = '';
   MEALS.forEach(m => {
-    const text = (state.current[key] && state.current[key][m.key]) || '';
+    const text = (state.current[day.key] && state.current[day.key][m.key]) || '';
     const row = document.createElement('div');
     row.className = 'meal-row';
     row.innerHTML = `
@@ -527,6 +513,31 @@ function renderHome(){
   });
 }
 
+document.getElementById('prevDayBtn').addEventListener('click', () => {
+  if(selectedDayIndex > 0){ selectedDayIndex--; renderHome(); }
+});
+document.getElementById('nextDayBtn').addEventListener('click', () => {
+  if(selectedDayIndex < DAYS.length - 1){ selectedDayIndex++; renderHome(); }
+});
+(function setupSwipe(){
+  const el = document.getElementById('view-home');
+  let sx = 0, sy = 0, tracking = false;
+  el.addEventListener('touchstart', e => {
+    if(e.touches.length !== 1) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true;
+  }, { passive:true });
+  el.addEventListener('touchend', e => {
+    if(!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      if(dx < 0 && selectedDayIndex < DAYS.length - 1){ selectedDayIndex++; renderHome(); }
+      else if(dx > 0 && selectedDayIndex > 0){ selectedDayIndex--; renderHome(); }
+    }
+  }, { passive:true });
+})();
+
 function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
@@ -534,37 +545,97 @@ function escapeHtml(s){
 /* ═══════════════════════════════════════════
    RENDER: WEEK EDIT LISTS (current + base)
    ═══════════════════════════════════════════ */
+const openDaysMap = { current: new Set(), base: new Set() };
+let swapArmed = null; // {day, meal}
+
 function renderWeekList(containerId, dataKey){
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-  const { key: todayKey } = todayKeyAndLabel();
+  const todayKey = DAYS[todayIndex()].key;
   DAYS.forEach(day => {
-    const card = document.createElement('div');
+    const card = document.createElement('details');
     card.className = 'day-card';
+    if(openDaysMap[dataKey].has(day.key)) card.open = true;
     const isToday = dataKey === 'current' && day.key === todayKey;
+    const isDiff = dataKey === 'current' && !weeksEqual(state.current[day.key], state.base[day.key]);
     card.innerHTML = `
-      <div class="day-card-head">
-        <span>${day.label}</span>
-        ${isToday ? '<span class="date-sub">oggi</span>' : ''}
-      </div>
+      <summary class="day-card-head">
+        <span>${day.label}${isToday ? ' <span class="date-sub">· oggi</span>' : ''}${isDiff ? ' <span class="mini-diff">Modificato</span>' : ''}</span>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </summary>
       <div class="day-card-body"></div>`;
     const body = card.querySelector('.day-card-body');
     MEALS.forEach(m => {
       const wrap = document.createElement('div');
       wrap.className = 'meal-edit';
       const val = (state[dataKey][day.key] && state[dataKey][day.key][m.key]) || '';
+      const swapBtn = dataKey === 'current'
+        ? `<button type="button" class="meal-swap-btn" data-day="${day.key}" data-meal="${m.key}" title="Scambia questo pasto">
+             <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+           </button>`
+        : '';
       wrap.innerHTML = `
-        <label><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[m.icon]}</svg>${m.label}</label>
+        <div class="meal-edit-head">
+          <label><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[m.icon]}</svg>${m.label}</label>
+          ${swapBtn}
+        </div>
         <textarea rows="1" placeholder="Nessun pasto…" data-day="${day.key}" data-meal="${m.key}" data-target="${dataKey}">${escapeHtml(val)}</textarea>`;
       body.appendChild(wrap);
     });
+    card.addEventListener('toggle', () => {
+      if(card.open){
+        openDaysMap[dataKey].add(day.key);
+        body.querySelectorAll('textarea').forEach(autosize);
+      }else{
+        openDaysMap[dataKey].delete(day.key);
+      }
+    });
     container.appendChild(card);
   });
-  // autosize + listeners
   container.querySelectorAll('textarea').forEach(ta => {
     autosize(ta);
     ta.addEventListener('input', onMealEdit);
   });
+  if(dataKey === 'current'){
+    container.querySelectorAll('.meal-swap-btn').forEach(btn => {
+      btn.addEventListener('click', onSwapBtnClick);
+    });
+    updateArmedUI(container);
+  }
+}
+
+function updateArmedUI(container){
+  container.querySelectorAll('.meal-swap-btn').forEach(btn => {
+    const isArmed = swapArmed && swapArmed.day === btn.dataset.day && swapArmed.meal === btn.dataset.meal;
+    btn.classList.toggle('active', !!isArmed);
+    btn.closest('.meal-edit').classList.toggle('armed', !!isArmed);
+  });
+}
+
+function onSwapBtnClick(e){
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  const day = btn.dataset.day, meal = btn.dataset.meal;
+  if(swapArmed && swapArmed.day === day && swapArmed.meal === meal){
+    swapArmed = null;
+    updateArmedUI(document.getElementById('currentWeekList'));
+    return;
+  }
+  if(!swapArmed){
+    swapArmed = { day, meal };
+    updateArmedUI(document.getElementById('currentWeekList'));
+    toast('Ora tocca il pasto con cui scambiarlo');
+    return;
+  }
+  const a = swapArmed, b = { day, meal };
+  const tmp = state.current[a.day][a.meal];
+  state.current[a.day][a.meal] = state.current[b.day][b.meal];
+  state.current[b.day][b.meal] = tmp;
+  swapArmed = null;
+  queueSave();
+  renderWeekList('currentWeekList','current');
+  renderHome();
+  toast('Pasti scambiati');
 }
 
 function autosize(ta){
@@ -585,56 +656,12 @@ function onMealEdit(e){
 }
 
 /* ═══════════════════════════════════════════
-   SWAP TOOLS
+   RESET SETTIMANA
    ═══════════════════════════════════════════ */
-function fillDaySelects(){
-  const selects = ['swapMealDayA','swapMealDayB','swapDayA','swapDayB'];
-  selects.forEach(id => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = DAYS.map(d => `<option value="${d.key}">${d.label}</option>`).join('');
-  });
-  document.getElementById('swapDayB').selectedIndex = 1;
-  document.getElementById('swapMealDayB').selectedIndex = 1;
-  fillMealSelect('swapMealA');
-  fillMealSelect('swapMealB');
-  document.getElementById('swapMealB').selectedIndex = 0;
-}
-function fillMealSelect(id){
-  const sel = document.getElementById(id);
-  sel.innerHTML = MEALS.map((m,i) => `<option value="${m.key}">${m.label}${(m.key==='spuntino1')?' 1':''}${(m.key==='spuntino2')?' 2':''}</option>`).join('');
-}
-
-document.getElementById('doSwapMeal').addEventListener('click', () => {
-  const dA = document.getElementById('swapMealDayA').value;
-  const mA = document.getElementById('swapMealA').value;
-  const dB = document.getElementById('swapMealDayB').value;
-  const mB = document.getElementById('swapMealB').value;
-  if(dA === dB && mA === mB){ toast('Seleziona due pasti diversi'); return; }
-  const tmp = state.current[dA][mA];
-  state.current[dA][mA] = state.current[dB][mB];
-  state.current[dB][mB] = tmp;
-  queueSave();
-  renderWeekList('currentWeekList','current');
-  renderHome();
-  toast('Pasti scambiati');
-});
-
-document.getElementById('doSwapDay').addEventListener('click', () => {
-  const dA = document.getElementById('swapDayA').value;
-  const dB = document.getElementById('swapDayB').value;
-  if(dA === dB){ toast('Seleziona due giorni diversi'); return; }
-  const tmp = state.current[dA];
-  state.current[dA] = state.current[dB];
-  state.current[dB] = tmp;
-  queueSave();
-  renderWeekList('currentWeekList','current');
-  renderHome();
-  toast('Giorni scambiati');
-});
-
 document.getElementById('resetBtn').addEventListener('click', () => {
   if(!confirm('Ripristinare la settimana in corso dalla settimana base? Le modifiche apportate verranno perse.')) return;
   state.current = cloneWeek(state.base);
+  swapArmed = null;
   queueSave();
   renderWeekList('currentWeekList','current');
   renderHome();
@@ -663,7 +690,7 @@ function renderAll(){
 }
 
 loadCache();
-fillDaySelects();
+selectedDayIndex = todayIndex();
 renderAll();
 initFirebase();
 </script>
